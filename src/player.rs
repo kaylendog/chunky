@@ -47,6 +47,14 @@ fn spawn_player(mut commands: Commands) {
         })
         .with_children(|parent| {
             parent.spawn(Camera3dBundle::default());
+            parent.spawn(PointLightBundle {
+                point_light: PointLight {
+                    intensity: 100_000_000.0,
+                    range: 1024.0,
+                    ..default()
+                },
+                ..default()
+            });
         });
 }
 
@@ -138,7 +146,7 @@ fn load_chunks_near_player(
 
     // unload chunks in 10x10 radius
     events.send_batch(
-        iproduct!(-0..=0, -0..=0, -0..=0)
+        iproduct!(0..2, 0..2, 0..2)
             .filter_map(|diff| {
                 let pos = player_chunk + diff.into();
                 match chunks.is_unloaded(pos) {

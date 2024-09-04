@@ -117,6 +117,22 @@ impl Ord for BlockPos {
     }
 }
 
+impl Add for BlockPos {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        Self::new(self.x + other.x, self.y + other.y, self.z + other.z)
+    }
+}
+
+impl Sub for BlockPos {
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self {
+        Self::new(self.x - other.x, self.y - other.y, self.z - other.z)
+    }
+}
+
 impl BlockPos {
     /// Create a new block position.
     pub fn new(x: u8, y: u8, z: u8) -> Self {
@@ -149,9 +165,9 @@ impl Into<(u8, u8, u8)> for BlockPos {
     }
 }
 
-impl Into<IVec3> for BlockPos {
-    fn into(self) -> IVec3 {
-        IVec3::new(self.x as i32, self.y as i32, self.z as i32)
+impl From<BlockPos> for IVec3 {
+    fn from(pos: BlockPos) -> IVec3 {
+        IVec3::new(pos.x as i32, pos.y as i32, pos.z as i32)
     }
 }
 
@@ -345,6 +361,7 @@ fn poll_chunk_events(
     mut tasks: Query<(Entity, &mut ChunkTask)>,
     mut chunks: ResMut<Chunks>,
     mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     tasks
         .iter_mut()
@@ -361,14 +378,12 @@ fn poll_chunk_events(
             match event {
                 ChunkEvent::LoadComplete(chunk, mesh) => {
                     // spawn shit mesh
-                    commands.spawn((
-                        PbrBundle {
-                            transform: Transform::from_translation(chunk.position.to_world()),
-                            mesh: meshes.add(mesh),
-                            ..default()
-                        },
-                        Wireframe,
-                    ));
+                    commands.spawn((PbrBundle {
+                        transform: Transform::from_translation(chunk.position.to_world()),
+                        mesh: meshes.add(mesh),
+                        material: materials.add(StandardMaterial::from_color(Color::BLACK)),
+                        ..default()
+                    },));
                     chunks.chunks.insert(chunk.position, chunk);
                 }
                 ChunkEvent::UnloadComplete(pos) => {

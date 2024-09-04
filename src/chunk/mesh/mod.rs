@@ -55,9 +55,9 @@ impl<'a> ChunkNeighbours<'a> {
             (_, -1, _) => self.down.block_at((x as u8, CHUNK_SIZE_MINUS_ONE, z as u8)),
             (_, CHUNK_SIZE_PLUS_ONE, _) => self.up.block_at((x as u8, 0, z as u8)),
             (_, _, -1) => self
-                .south
+                .north
                 .block_at((x as u8, y as u8, CHUNK_SIZE_MINUS_ONE)),
-            (_, _, CHUNK_SIZE_PLUS_ONE) => self.north.block_at((x as u8, y as u8, 0)),
+            (_, _, CHUNK_SIZE_PLUS_ONE) => self.south.block_at((x as u8, y as u8, 0)),
             _ => self.chunk.block_at((x as u8, y as u8, z as u8)),
         }
     }
@@ -105,28 +105,74 @@ impl From<Face> for Dir3 {
 }
 
 impl Quad {
+    /// Returns a quad for the north face of the block at the given position.
+    #[inline]
+    pub fn north(pos: BlockPos) -> Quad {
+        Quad::square(
+            IVec3::new(pos.x as i32, pos.y as i32, pos.z as i32),
+            Dir3::NEG_Z,
+        )
+    }
+
+    /// Returns a quad for the east face of the block at the given position.
+    #[inline]
+    pub fn east(pos: BlockPos) -> Quad {
+        Quad::square(
+            IVec3::new(pos.x as i32 + 1, pos.y as i32, pos.z as i32),
+            Dir3::X,
+        )
+    }
+
+    /// Returns a quad for the south face of the block at the given position.
+    #[inline]
+    pub fn south(pos: BlockPos) -> Quad {
+        Quad::square(
+            IVec3::new(pos.x as i32 + 1, pos.y as i32, pos.z as i32 + 1),
+            Dir3::Z,
+        )
+    }
+
+    /// Returns a quad for the west face of the block at the given position.
+    #[inline]
+    pub fn west(pos: BlockPos) -> Quad {
+        Quad::square(
+            IVec3::new(pos.x as i32, pos.y as i32, pos.z as i32 + 1),
+            Dir3::NEG_X,
+        )
+    }
+
+    /// Returns a quad for the up face of the block at the given position.
+    #[inline]
+    pub fn up(pos: BlockPos) -> Quad {
+        Quad::square(
+            IVec3::new(pos.x as i32, pos.y as i32 + 1, pos.z as i32 + 1),
+            Dir3::Y,
+        )
+    }
+
+    /// Returns a quad for the down face of the block at the given position.
+    #[inline]
+    pub fn down(pos: BlockPos) -> Quad {
+        Quad::square(
+            IVec3::new(pos.x as i32, pos.y as i32, pos.z as i32),
+            Dir3::NEG_Y,
+        )
+    }
+
     /// Create a list of quads for the given block position.
+    #[inline]
     pub fn faces(pos: BlockPos) -> [Quad; 6] {
-        let BlockPos { x, y, z } = pos;
-        let x = x as i32;
-        let y = y as i32;
-        let z = z as i32;
         [
-            // north
-            Quad::square(IVec3::new(x, y, z), Dir3::NEG_Z),
-            // east
-            Quad::square(IVec3::new(x + 1, y, z), Dir3::X),
-            // south
-            Quad::square(IVec3::new(x + 1, y, z + 1), Dir3::Z),
-            // west
-            Quad::square(IVec3::new(x, y, z + 1), Dir3::NEG_X),
-            // up
-            Quad::square(IVec3::new(x, y + 1, z + 1), Dir3::Y),
-            // down
-            Quad::square(IVec3::new(x, y, z), Dir3::NEG_Y),
+            Quad::north(pos),
+            Quad::east(pos),
+            Quad::south(pos),
+            Quad::west(pos),
+            Quad::up(pos),
+            Quad::down(pos),
         ]
     }
 
+    #[inline]
     pub fn square(pos: IVec3, direction: Dir3) -> Quad {
         Quad::new(pos, direction, 1, 1)
     }
@@ -160,13 +206,11 @@ impl Quad {
         let a = self.vertices[0];
         let b = self.vertices[1];
         let c = self.vertices[2];
-        let d = self.vertices[3];
 
         let ab = b - a;
         let ac = c - a;
-        let ad = d - a;
 
-        (ab.cross(ac) + ac.cross(ad)).as_vec3().normalize()
+        ab.cross(ac).as_vec3().normalize()
     }
 }
 
